@@ -1,3 +1,5 @@
+#!/usr/bin/perl -Ilib
+
 package Drelwa;
 
 use warnings;
@@ -5,6 +7,7 @@ use strict;
 use YAML::Syck;
 use Text::Markdown 'markdown';
 use Template::Alloy;
+use Drelwa::Filter::Highlight;
 
 =head1 NAME
 
@@ -39,9 +42,9 @@ Perhaps a little code snippet.
 sub in {
     my $file = shift;
 
-    my @_path = split(/\//, $file);
-    my @date = split(/-/, pop(@_path), 4);
-    my @_fname = split(/\./, pop(@date), 2);
+    my @_path  = split( /\//, $file );
+    my @date   = split( /-/,  pop(@_path), 4 );
+    my @_fname = split( /\./, pop(@date), 2 );
 
     open( FILE, '<', $file ) or die "Could not open file: $file!";
 
@@ -65,11 +68,12 @@ sub in {
 
     my $post = Load($yaml);
 
-    $post->{body} = markdown($markdown);
-    $post->{date} = join('-', @date);
-    $post->{path} = join('/', @date);
+    $post->{content} = markdown($markdown);
+    $post->{date}    = join( '-', @date );
+    $post->{path}    = join( '/', @date );
     $_fname[0] =~ s/[^\w_-]//g;
-    $post->{filename} = $_fname[0].'.html';
+    $post->{filename} = $_fname[0] . '.html';
+    $post->{url}      = '/' . $post->{path} . '/' . $post->{filename};
     return $post;
 }
 
@@ -79,9 +83,14 @@ sub in {
 
 sub out {
     my $data = shift;
+    my $template = shift || 'wrapper';
+
     my $out = '';
-    my $t = Template::Alloy->new( INCLUDE_PATH => [ 'tpl/' ], );
-    $t->process('wrapper', $data, \$out);
+    my $t   = Template::Alloy->new(
+        INCLUDE_PATH => ['tpl/'],
+        FILTERS      => { highlight => \&Drelwa::Filter::Hightlight::html, }
+    );
+    $t->process( $template, $data, \$out );
 
     return $out;
 }

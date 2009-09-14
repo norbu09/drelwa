@@ -8,6 +8,10 @@ license  'perl';
 requires 'Template::Alloy';
 requires 'Text::Markdown';
 requires 'YAML::Syck';
+requires 'File::Util';
+requires 'File::Path';
+requires 'Getopt::Long';
+requires 'Pod::Usage';
 
 build_requires 'Test::More';
 

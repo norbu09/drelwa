@@ -19,6 +19,10 @@ no_index:
     - inc
     - t
 requires:
+  File::Path: 0
+  File::Util: 0
+  Getopt::Long: 0
+  Pod::Usage: 0
   Template::Alloy: 0
   Text::Markdown: 0
   YAML::Syck: 0

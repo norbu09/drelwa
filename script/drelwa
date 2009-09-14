@@ -8,14 +8,21 @@ use File::Path qw(make_path);
 use File::Util;
 use Getopt::Long;
 use Pod::Usage;
+use POSIX qw(strftime);
 
 ########## config section ############
 my $verbose;
 my $help;
 my $man;
 my $rebuild;
+my $index;
+my $atom;
+my $posts = 'posts/';
+my $site = 'site/';
 
 GetOptions(
+    "atom|a"    => \$atom,
+    "index|i"   => \$index,
     "rebuild|r" => \$rebuild,
     "verbose|v" => \$verbose,
     'help|?'    => \$help,
@@ -28,26 +35,69 @@ pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
 
 if($rebuild){
-    my $d = File::Util->new();
-    my @_files = $d->list_dir( 'posts/' , '--files-only' );
-    my @files = sort(@_files);
+    my @files = _dir();
     foreach my $file (@files){
         print "Rebuilding $file ...\n" if $verbose;
-        rebuild_file('posts/'.$file);
+        rebuild_file($posts.$file);
     }
+}
+
+if($index){
+    print "Rebuilding index.html ...\n" if $verbose;
+    my @_files = _dir();
+    my @files = splice(@_files, -5);
+    my @posts;
+    foreach my $file (@files){
+        push(@posts, Drelwa::in($posts.$file));
+    }
+    my $data;
+    $data->{path} = '/';
+    $data->{filename} = 'index.html';
+    $data->{layout} = 'index';
+    $data->{posts} = \@posts;
+    _write_file($data);
+}
+
+if($atom){
+    print "Rebuilding atom.xml ...\n" if $verbose;
+    my @_files = _dir();
+    my @files = splice(@_files, -5);
+    my @posts;
+    foreach my $file (@files){
+        push(@posts, Drelwa::in($posts.$file));
+    }
+    my $data;
+    $data->{time} = strftime "%Y-%m-%eT%H:%M:%S%z", localtime;
+    $data->{path} = '/';
+    $data->{filename} = 'atom.xml';
+    $data->{layout} = 'atom';
+    $data->{posts} = \@posts;
+    _write_file($data, 'atom');
 }
 
 sub rebuild_file {
     my $file = shift;
     my $data = Drelwa::in($file);
-    my $post = Drelwa::out($data);
+    _write_file($data);
+}
 
-    my $path = 'site/' . $data->{path} . '/';
+sub _write_file {
+    my $data = shift;
+    my $template = shift;
+    my $post = Drelwa::out($data, $template);
+    my $path = $site . $data->{path} . '/';
 
     make_path($path);
     open( POST, '>', $path . $data->{filename} ) or die "$@\n";
     print POST $post;
     close POST;
+}
+
+sub _dir {
+    my $d = File::Util->new();
+    my @_files = $d->list_dir( $posts , '--files-only' );
+    my @files = sort(@_files);
+    return @files;
 }
 
 __END__
@@ -61,11 +111,7 @@ drelwa - commandline parser for blog posts
 drelwa [options]
 
  Options:
-   -in|i            input file (the CDR)
-   -out|o           output file (defaults to [time in sec].DL.CDR.csv)
-   -rate|r          the rate card
-   -sec|s           minimum seconds counted as billable (default 4)
-   -multi|m         a multiplier for different rates per customer
+   -rebuild|r       rebuild the blog pages
    -help|?          brief help message
    -verbose|v       be chatty
    -man             full documentation
