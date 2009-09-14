@@ -1,0 +1,21 @@
+#!/usr/bin/perl -Ilib
+
+use strict;
+use warnings;
+use Drelwa;
+use Data::Dumper;
+use File::Path qw(make_path);
+
+my $file = shift;
+die "Usage: $0 [file]\n" unless $file;
+#my $file = '/Users/lenz/workspace/personal/norbu09.org/_posts/2009-08-26-Django-like-URL-mapping-in-Catalyst---kind-of.markdown';
+my $data = Drelwa::in($file);
+my $post = Drelwa::out($data);
+
+
+my $path = 'site/'.$data->{path}.'/';
+
+make_path($path);
+open(POST, '>', $path.$data->{filename}) or die "$@\n";
+print POST $post;
+close POST;
