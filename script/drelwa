@@ -5,17 +5,88 @@ use warnings;
 use Drelwa;
 use Data::Dumper;
 use File::Path qw(make_path);
+use File::Util;
+use Getopt::Long;
+use Pod::Usage;
 
-my $file = shift;
-die "Usage: $0 [file]\n" unless $file;
-#my $file = '/Users/lenz/workspace/personal/norbu09.org/_posts/2009-08-26-Django-like-URL-mapping-in-Catalyst---kind-of.markdown';
-my $data = Drelwa::in($file);
-my $post = Drelwa::out($data);
+########## config section ############
+my $verbose;
+my $help;
+my $man;
+my $rebuild;
+
+GetOptions(
+    "rebuild|r" => \$rebuild,
+    "verbose|v" => \$verbose,
+    'help|?'    => \$help,
+    "man"       => \$man,
+) or pod2usage(2);
+######################################
+
+pod2usage(1) if $help;
+pod2usage( -exitstatus => 0, -verbose => 2 ) if $man;
 
 
-my $path = 'site/'.$data->{path}.'/';
+if($rebuild){
+    my $d = File::Util->new();
+    my @_files = $d->list_dir( 'posts/' , '--files-only' );
+    my @files = sort(@_files);
+    foreach my $file (@files){
+        print "Rebuilding $file ...\n" if $verbose;
+        rebuild_file('posts/'.$file);
+    }
+}
 
-make_path($path);
-open(POST, '>', $path.$data->{filename}) or die "$@\n";
-print POST $post;
-close POST;
+sub rebuild_file {
+    my $file = shift;
+    my $data = Drelwa::in($file);
+    my $post = Drelwa::out($data);
+
+    my $path = 'site/' . $data->{path} . '/';
+
+    make_path($path);
+    open( POST, '>', $path . $data->{filename} ) or die "$@\n";
+    print POST $post;
+    close POST;
+}
+
+__END__
+
+=head1 NAME
+
+drelwa - commandline parser for blog posts
+
+=head1 SYNOPSIS
+
+drelwa [options]
+
+ Options:
+   -in|i            input file (the CDR)
+   -out|o           output file (defaults to [time in sec].DL.CDR.csv)
+   -rate|r          the rate card
+   -sec|s           minimum seconds counted as billable (default 4)
+   -multi|m         a multiplier for different rates per customer
+   -help|?          brief help message
+   -verbose|v       be chatty
+   -man             full documentation
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-help>
+
+Print a brief help message and exits.
+
+=item B<-man>
+
+Prints the manual page and exits.
+
+=back
+
+=head1 DESCRIPTION
+
+B<This parser> converts blog posts written in markdown into HTML pages
+that can be served by a web server.
+
+=cut

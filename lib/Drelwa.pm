@@ -68,6 +68,7 @@ sub in {
     $post->{body} = markdown($markdown);
     $post->{date} = join('-', @date);
     $post->{path} = join('/', @date);
+    $_fname[0] =~ s/[^\w_-]//g;
     $post->{filename} = $_fname[0].'.html';
     return $post;
 }
