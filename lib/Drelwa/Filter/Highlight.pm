@@ -30,11 +30,12 @@ fancy but good enough for my private stuff.
 
 sub html {
     my $block = shift;
+    return unless $block; 
     my $pyg = shift || '/usr/local/bin/pygmentize';
     my $tmp = File::Temp->new(
         TEMPLATE => 'tempXXXXX',
         DIR      => '/tmp',
-        SUFFIX   => '.pyg'
+        SUFFIX   => '.sh'
     );
     
     open(TMP, '>', $tmp) or croak "Could not open file $tmp: $@\n";

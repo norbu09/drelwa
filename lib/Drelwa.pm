@@ -85,11 +85,27 @@ sub out {
     my $data = shift;
     my $template = shift || 'wrapper';
 
-    my $out = '';
-    my $t   = Template::Alloy->new(
+    my $t = Template::Alloy->new(
         INCLUDE_PATH => ['tpl/'],
-        FILTERS      => { highlight => \&Drelwa::Filter::Hightlight::html, }
+        FILTERS => { highlight => \&Drelwa::Filter::Highlight::html, },
     );
+
+    $t->define_directive(
+        HIGHLIGHT => {
+            parse_sub => sub { return; },    # parse additional items in the tag
+            play_sub => sub {
+                my ( $self, $ref, $node, $out_ref ) = @_;
+                $$out_ref .= "I always say the same thing!";
+                return;
+            },
+            is_block  => 1,        # is this block like
+            is_postop => 0,        # not a post operative directive
+            no_interp => 1,        # no interpolation in this block
+            continues => undef,    # it doesn't "continue" any other directives
+        },
+    );
+
+    my $out = '';
     $t->process( $template, $data, \$out );
 
     return $out;
